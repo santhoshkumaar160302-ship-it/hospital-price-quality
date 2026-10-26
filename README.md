@@ -1,5 +1,7 @@
 # Hospital Price & Quality Pipeline
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://hospital-price-quality-gxkqrkm2kmfxoez5mrsour.streamlit.app/)
+
 **What does Medicare pay each hospital for the same procedure, and does paying more buy better care?**
 
 A batch data pipeline that ingests public CMS (Centers for Medicare & Medicaid Services)
@@ -9,7 +11,7 @@ compares hospitals on price and quality side by side.
 
 Runs on your laptop with Docker. Cost: **$0**. Data: public, no API key.
 
-**Live demo:** _add your Streamlit Community Cloud link here_ (reads a published snapshot of the
+**Live demo: [open the dashboard](https://hospital-price-quality-gxkqrkm2kmfxoez5mrsour.streamlit.app/)** (reads a published snapshot of the
 pipeline's output tables; see [Public demo](#public-demo)).
 
 ---
