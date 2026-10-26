@@ -1,0 +1,80 @@
+# Datasets ingested by the pipeline.
+#
+# kind: provider_data  -> CMS Provider Data Catalog. The latest CSV and its
+#                         release date are discovered at run time from the
+#                         catalog's metastore API, so new quarterly releases
+#                         are picked up automatically.
+# kind: pinned_files   -> one CSV per data year (Medicare inpatient files are
+#                         published once a year). Add a line to load a new year.
+#
+# required_columns use normalized names: lower-case, non-alphanumerics -> "_"
+#   ("City/Town" -> city_town, "Hospital overall rating" -> hospital_overall_rating)
+# The load fails before commit if a column is missing or min_rows isn't reached.
+
+datasets:
+  hospital_general:
+    kind: provider_data
+    dataset_id: xubh-q36u            # Hospital General Information
+    table: raw.hospital_general_info
+    fallback_releases:               # used only if the catalog API is unreachable
+      "2026-07-22": https://data.cms.gov/provider-data/sites/default/files/resources/893c372430d9d71a1c52737d01239d47_1785189955/Hospital_General_Information.csv
+    min_rows: 3000
+    required_columns:
+      - facility_id
+      - facility_name
+      - city_town
+      - state
+      - zip_code
+      - hospital_type
+      - hospital_ownership
+      - emergency_services
+      - hospital_overall_rating
+
+  unplanned_visits:
+    kind: provider_data
+    dataset_id: 632h-zaca            # Unplanned Hospital Visits - Hospital (readmissions)
+    table: raw.unplanned_hospital_visits
+    fallback_releases:
+      "2026-09-10": https://data.cms.gov/provider-data/sites/default/files/resources/30edc1d0417a34b58affcc2495a02b0a_1790013959/Unplanned_Hospital_Visits-Hospital.csv
+    min_rows: 20000
+    required_columns: &measure_columns
+      - facility_id
+      - measure_id
+      - measure_name
+      - compared_to_national
+      - denominator
+      - score
+      - start_date
+      - end_date
+
+  complications_deaths:
+    kind: provider_data
+    dataset_id: ynj2-r877            # Complications and Deaths - Hospital (mortality, safety)
+    table: raw.complications_deaths
+    fallback_releases:
+      "2026-09-10": https://data.cms.gov/provider-data/sites/default/files/resources/6af7c44d77436e5a1caac3ce39a83fe9_1790013956/Complications_and_Deaths-Hospital.csv
+    min_rows: 20000
+    required_columns: *measure_columns
+
+  inpatient_drg:
+    kind: pinned_files               # Medicare Inpatient Hospitals - by Provider and Service
+    table: raw.medicare_inpatient_drg
+    min_rows: 80000
+    # Older releases named the CCN column Rndrng_CCN (CMS RY22 data dictionary).
+    column_aliases:
+      rndrng_ccn: rndrng_prvdr_ccn
+    required_columns:
+      - rndrng_prvdr_ccn
+      - rndrng_prvdr_org_name
+      - rndrng_prvdr_state_abrvtn
+      - drg_cd
+      - drg_desc
+      - tot_dschrgs
+      - avg_submtd_cvrd_chrg
+      - avg_tot_pymt_amt
+      - avg_mdcr_pymt_amt
+    releases:                        # data year -> CSV (from catalog.data.gov / data.cms.gov)
+      "2021": https://data.cms.gov/sites/default/files/2023-05/a754bf0b-0c51-4daf-876e-272f90a11c05/MUP_IHP_RY23_P03_V10_DY21_PRVSVC.CSV
+      "2022": https://data.cms.gov/sites/default/files/2024-05/7d1f4bcd-7dd9-4fd1-aa7f-91cd69e452d3/MUP_INP_RY24_P03_V10_DY22_PrvSvc.CSV
+      "2023": https://data.cms.gov/sites/default/files/2025-05/ca1c9013-8c7c-4560-a4a1-28cf7e43ccc8/MUP_INP_RY25_P03_V10_DY23_PrvSvc.CSV
+      "2024": https://data.cms.gov/sites/default/files/2026-04/828defb5-c9e6-4442-8c1b-f27bc0799daf/MUP_INP_RY26_P03_V10_DY24_PrvSvc.CSV

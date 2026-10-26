@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: cms
+    description: Raw CMS files loaded by the ingest package. Every column is TEXT; one row per source row per release.
+    schema: raw
+    loaded_at_field: _loaded_at
+    freshness:   # CMS publishes quarterly (provider data) and yearly (inpatient)
+      warn_after: {count: 100, period: day}
+      error_after: {count: 200, period: day}
+    tables:
+      - name: hospital_general_info
+        description: Hospital General Information (CMS Provider Data Catalog xubh-q36u).
+      - name: unplanned_hospital_visits
+        description: Unplanned Hospital Visits - Hospital (632h-zaca). Readmission and return-day measures.
+      - name: complications_deaths
+        description: Complications and Deaths - Hospital (ynj2-r877). Mortality and patient-safety measures.
+      - name: medicare_inpatient_drg
+        description: Medicare Inpatient Hospitals - by Provider and Service. One file per data year.
+        freshness:
+          warn_after: {count: 400, period: day}
+          error_after: {count: 550, period: day}

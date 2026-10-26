@@ -1,0 +1,33 @@
+name: hospital
+version: "1.0.0"
+config-version: 2
+profile: hospital
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+clean-targets: ["target", "dbt_packages"]
+
+vars:
+  # Hospital-wide readmission measure. CMS has been moving from the claims-only
+  # measure to the hybrid (claims + EHR) version; whichever is present is used.
+  hospital_wide_readmission_measures: ["READM_30_HOSP_WIDE", "HYBRID_HWR"]
+  # Minimum discharges for a hospital/DRG price to be shown (CMS suppresses < 11).
+  min_discharges: 11
+
+models:
+  hospital:
+    staging:
+      +schema: staging
+      +materialized: view
+    intermediate:
+      +schema: intermediate
+      +materialized: view
+    marts:
+      +schema: marts
+      +materialized: table
+
+snapshots:
+  hospital:
+    +target_schema: snapshots

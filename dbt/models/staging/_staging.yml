@@ -1,0 +1,51 @@
+version: 2
+
+models:
+  - name: stg_cms__hospitals
+    description: One row per hospital in the latest Hospital General Information release.
+    columns:
+      - name: ccn
+        description: CMS Certification Number, normalized to 6 characters.
+        data_tests: [unique, not_null, valid_ccn]
+      - name: state
+        data_tests: [not_null]
+      - name: overall_rating
+        description: CMS overall star rating 1-5; NULL when CMS doesn't rate the hospital.
+        data_tests:
+          - accepted_values:
+              values: [1, 2, 3, 4, 5]
+              quote: false
+
+  - name: stg_cms__quality_measures
+    description: One row per hospital per measure from the readmission and complications/deaths datasets.
+    data_tests:
+      - unique_combination:
+          columns: [ccn, measure_id]
+    columns:
+      - name: ccn
+        data_tests: [not_null, valid_ccn]
+      - name: measure_id
+        data_tests: [not_null]
+      - name: score
+        description: Measure value. EDAC (excess days in acute care) can be negative when a hospital beats the expected value.
+        data_tests:
+          - not_negative:
+              config:
+                where: "measure_id not like 'EDAC%'"
+
+  - name: stg_cms__inpatient_drg
+    description: Medicare inpatient discharges and payments per hospital, DRG and data year.
+    data_tests:
+      - unique_combination:
+          columns: [data_year, ccn, drg_cd]
+    columns:
+      - name: ccn
+        data_tests: [not_null, valid_ccn]
+      - name: drg_cd
+        data_tests: [not_null]
+      - name: discharges
+        data_tests: [not_null, not_negative]
+      - name: avg_total_payment
+        data_tests: [not_null, not_negative]
+      - name: avg_medicare_payment
+        data_tests: [not_null, not_negative]

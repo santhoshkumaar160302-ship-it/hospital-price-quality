@@ -1,0 +1,13 @@
+Facility ID,Facility Name,Address,City/Town,State,ZIP Code,County/Parish,Telephone Number,Hospital Type,Hospital Ownership,Emergency Services,Meets criteria for birthing friendly designation,Hospital overall rating,Hospital overall rating footnote,MORT Group Measure Count,Count of Facility MORT Measures,Count of MORT Measures Better,Count of MORT Measures No Different,Count of MORT Measures Worse,MORT Group Footnote
+150001,RIVERBEND REGIONAL MEDICAL CENTER,5405 MAIN STREET,BLOOMINGTON,IN,47401,MONROE,(354) 555-0100,Acute Care Hospitals,Voluntary non-profit - Private,Yes,Y,4,,7,7,1,6,0,
+150002,HOOSIER VALLEY HOSPITAL,6568 MAIN STREET,INDIANAPOLIS,IN,46202,MARION,(866) 555-0100,Acute Care Hospitals,Proprietary,Yes,Y,2,,7,7,0,6,1,
+150003,PRAIRIE CREEK COMMUNITY HOSPITAL,891 MAIN STREET,LAFAYETTE,IN,47904,TIPPECANOE,(274) 555-0100,Acute Care Hospitals,Government - Hospital District or Authority,Yes,Y,3,,7,7,0,7,0,
+150004,LIMESTONE CRITICAL ACCESS HOSPITAL,8879 MAIN STREET,BEDFORD,IN,47421,LAWRENCE,(296) 555-0100,Critical Access Hospitals,Government - Local,Yes,,Not Available,16,7,7,0,7,0,
+50001,PACIFIC CREST MEDICAL CENTER,6091 MAIN STREET,SAN JOSE,CA,95112,SANTA CLARA,(796) 555-0100,Acute Care Hospitals,Voluntary non-profit - Private,Yes,Y,5,,7,7,1,6,0,
+050002,GOLDEN HILLS HOSPITAL,1050 MAIN STREET,SACRAMENTO,CA,95816,SACRAMENTO,(719) 555-0100,Acute Care Hospitals,Voluntary non-profit - Private,Yes,Y,3,,7,7,0,7,0,
+050003,BAYVIEW GENERAL HOSPITAL,3617 MAIN STREET,OAKLAND,CA,94609,ALAMEDA,(238) 555-0100,Acute Care Hospitals,Proprietary,Yes,Y,2,,7,7,0,6,1,
+050004,SIERRA VISTA MEDICAL CENTER,1508 MAIN STREET,FRESNO,CA,93721,FRESNO,(644) 555-0100,Acute Care Hospitals,Government - Hospital District or Authority,Yes,Y,4,,7,7,1,6,0,
+450001,LONE STAR MEDICAL CENTER,6951 MAIN STREET,HOUSTON,TX,77030,HARRIS,(271) 555-0100,Acute Care Hospitals,Voluntary non-profit - Private,Yes,Y,4,,7,7,1,6,0,
+450002,BRAZOS RIVER HOSPITAL,4043 MAIN STREET,WACO,TX,76708,MCLENNAN,(292) 555-0100,Acute Care Hospitals,Proprietary,Yes,Y,3,,7,7,0,7,0,
+450003,GULF COAST REGIONAL HOSPITAL,9128 MAIN STREET,CORPUS CHRISTI,TX,78405,NUECES,(634) 555-0100,Acute Care Hospitals,Proprietary,Yes,Y,1,,7,7,0,6,1,
+450004,HILL COUNTRY MEDICAL CENTER,1068 MAIN STREET,AUSTIN,TX,78705,TRAVIS,(779) 555-0100,Acute Care Hospitals,Voluntary non-profit - Private,Yes,Y,5,,7,7,1,6,0,

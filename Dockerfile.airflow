@@ -1,0 +1,15 @@
+FROM apache/airflow:2.10.3-python3.11
+
+# Ingest dependencies go into Airflow's environment (pinned to this Airflow
+# version so pip can't upgrade or break it).
+COPY requirements-airflow.txt /tmp/requirements-airflow.txt
+RUN pip install --no-cache-dir "apache-airflow==${AIRFLOW_VERSION}" -r /tmp/requirements-airflow.txt
+
+# dbt lives in its own virtualenv: dbt and Airflow pin conflicting versions of
+# shared libraries, so keeping them apart is standard practice.
+RUN python -m venv /home/airflow/dbt-venv \
+ && /home/airflow/dbt-venv/bin/pip install --no-cache-dir dbt-core==1.8.8 dbt-postgres==1.8.2
+
+# Landing zone for downloaded files (group-writable, like the rest of /opt/airflow).
+RUN mkdir -p /opt/airflow/landing && chmod -R g+rwX /opt/airflow/landing
+ENV DBT_SEND_ANONYMOUS_USAGE_STATS=false

@@ -1,0 +1,124 @@
+version: 2
+
+models:
+  - name: dim_hospital
+    description: Current hospital dimension with star rating and summarized quality measures.
+    columns:
+      - name: ccn
+        data_tests: [unique, not_null, valid_ccn]
+      - name: quality_tier
+        data_tests:
+          - accepted_values:
+              values: [high, average, low, unrated]
+      - name: readmission_rate_pct
+        data_tests: [not_negative]
+
+  - name: dim_hospital_history
+    description: SCD Type 2 history of hospital ratings and attributes (from snap_hospitals).
+    data_tests:
+      - unique_combination:
+          columns: [ccn, version]
+    columns:
+      - name: ccn
+        data_tests: [not_null]
+
+  - name: fct_inpatient_drg_payments
+    description: >
+      Incremental fact table. One row per data year, hospital and DRG with Medicare payments
+      and price indexes vs. the state and national median for the same DRG.
+    data_tests:
+      - unique_combination:
+          columns: [data_year, ccn, drg_cd]
+    columns:
+      - name: ccn
+        data_tests:
+          - not_null
+          - relationships:
+              to: ref('dim_hospital')
+              field: ccn
+              config:
+                # Hospitals that closed or merged still appear in older billing data
+                # but not in the current hospital list: report, don't fail.
+                severity: warn
+      - name: price_index_vs_state
+        data_tests: [not_null, not_negative]
+      - name: avg_total_payment
+        data_tests: [not_null, not_negative]
+
+  - name: mart_hospital_value
+    description: Latest-year price vs. quality per hospital and DRG, with a value segment.
+    data_tests:
+      - unique_combination:
+          columns: [ccn, drg_cd]
+    columns:
+      - name: value_segment
+        data_tests:
+          - not_null
+          - accepted_values:
+              values: ['High value', 'High quality, higher cost', 'Average', 'Lower cost, lower quality',
+                       'Low value', 'Unrated']
+
+  - name: mart_state_drg_price_variation
+    description: Spread of prices for the same DRG across hospitals in each state and year.
+    data_tests:
+      - unique_combination:
+          columns: [data_year, state, drg_cd]
+    columns:
+      - name: max_to_min_ratio
+        data_tests: [not_null]
+
+  - name: mart_drg_price_trend
+    description: National discharge-weighted payment per DRG per year, with year-over-year change.
+    data_tests:
+      - unique_combination:
+          columns: [data_year, drg_cd]
+
+unit_tests:
+  - name: value_segment_rules
+    description: Each combination of star rating and price index lands in the right segment.
+    model: mart_hospital_value
+    given:
+      - input: ref('fct_inpatient_drg_payments')
+        rows:
+          - {data_year: 2024, ccn: 'A00001', provider_name: 'a', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 9000,  price_index_vs_state: 0.900}
+          - {data_year: 2024, ccn: 'A00002', provider_name: 'b', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 12000, price_index_vs_state: 1.200}
+          - {data_year: 2024, ccn: 'A00003', provider_name: 'c', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 11000, price_index_vs_state: 1.100}
+          - {data_year: 2024, ccn: 'A00004', provider_name: 'd', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 8000,  price_index_vs_state: 0.800}
+          - {data_year: 2024, ccn: 'A00005', provider_name: 'e', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 10000, price_index_vs_state: 1.000}
+          - {data_year: 2024, ccn: 'A00006', provider_name: 'f', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 10000, price_index_vs_state: 1.000}
+          - {data_year: 2024, ccn: 'A00007', provider_name: 'g', state: 'IN', drg_cd: '470', discharges: 5,  avg_total_payment: 10000, price_index_vs_state: 1.000}
+          - {data_year: 2023, ccn: 'A00001', provider_name: 'a', state: 'IN', drg_cd: '470', discharges: 50, avg_total_payment: 8500,  price_index_vs_state: 0.950}
+      - input: ref('dim_hospital')
+        rows:
+          - {ccn: 'A00001', hospital_name: 'A', overall_rating: 5}
+          - {ccn: 'A00002', hospital_name: 'B', overall_rating: 4}
+          - {ccn: 'A00003', hospital_name: 'C', overall_rating: 1}
+          - {ccn: 'A00004', hospital_name: 'D', overall_rating: 2}
+          - {ccn: 'A00005', hospital_name: 'E', overall_rating: 3}
+          - {ccn: 'A00006', hospital_name: 'F', overall_rating: null}
+          - {ccn: 'A00007', hospital_name: 'G', overall_rating: 5}
+    expect:
+      # A00007 is excluded (fewer than 11 discharges); 2023 rows are excluded (not the latest year).
+      rows:
+        - {ccn: 'A00001', value_segment: 'High value', price_rank_in_state: 2}
+        - {ccn: 'A00002', value_segment: 'High quality, higher cost', price_rank_in_state: 6}
+        - {ccn: 'A00003', value_segment: 'Low value', price_rank_in_state: 5}
+        - {ccn: 'A00004', value_segment: 'Lower cost, lower quality', price_rank_in_state: 1}
+        - {ccn: 'A00005', value_segment: 'Average', price_rank_in_state: 3}
+        - {ccn: 'A00006', value_segment: 'Unrated', price_rank_in_state: 3}
+
+  - name: readmission_measure_selection
+    description: Hospital-wide readmission comes from either measure ID; worse/better are counted by category.
+    model: int_hospital_quality_scores
+    given:
+      - input: ref('stg_cms__quality_measures')
+        rows:
+          - {ccn: 'B00001', measure_id: 'READM_30_HOSP_WIDE', compared_to_national: 'No Different Than the National Rate', score: 14.5}
+          - {ccn: 'B00001', measure_id: 'MORT_30_HF', compared_to_national: 'Worse Than the National Rate', score: 13.0}
+          - {ccn: 'B00001', measure_id: 'MORT_30_AMI', compared_to_national: 'Better Than the National Rate', score: 10.0}
+          - {ccn: 'B00002', measure_id: 'HYBRID_HWR', compared_to_national: 'Better Than the National Rate', score: 12.1}
+          - {ccn: 'B00002', measure_id: 'MORT_30_PN', compared_to_national: 'Number of Cases Too Small', score: null}
+    expect:
+      rows:
+        - {ccn: 'B00001', readmission_rate_pct: 14.5, mortality_measures_reported: 2, mortality_worse_count: 1, mortality_better_count: 1, measures_reported: 3}
+        - {ccn: 'B00002', readmission_rate_pct: 12.1, mortality_measures_reported: 0, mortality_worse_count: 0, mortality_better_count: 0, measures_reported: 1}
